@@ -25,8 +25,22 @@ export async function newTransaction(req, res) {
         return res.status(400);
     }
 
+    const transaction = {
+        value, 
+        description, 
+        type, 
+        date: new Date(),
+    }
+
     try {
         const user = await db.collection("accounts").findOne({ email });
+
+        let newId;
+        if(user.transactions.length === 0) {
+            newId = 0;
+        } else {
+            newId = user.transactions[user.transactions.length-1].id + 1;
+        }
 
         await db
             .collection("accounts")
@@ -34,12 +48,56 @@ export async function newTransaction(req, res) {
                 { email },
                 {
                     $set: {
-                        transactions: [...user.transactions, { value, description, type, date: new Date() }],
+                        transactions: [...user.transactions, { ...transaction, id: newId}],
                         balance: user.balance + changeBalance,
                     },
                 }
             );
         return res.sendStatus(201);
+    } catch (error) {
+        return res.status(500).send(error.message);
+    }
+}
+
+export async function deleteTransaction(req, res) {
+    const id = parseInt(req.params.id);
+    const { email } = res.locals.session;
+
+    if (isNaN(id)) {
+        return res.sendStatus(400);
+    }
+
+    try {
+        const user = await db.collection("accounts").findOne({ email });
+        const transactionIndex = user.transactions.findIndex((t) => t.id === id);
+
+        if (transactionIndex === -1) {
+            return res.status(404).send("Transaction not found");
+        }
+
+        const updatedTransactions = [
+            ...user.transactions.slice(0, transactionIndex),
+            ...user.transactions.slice(transactionIndex + 1),
+        ];
+
+        let changeBalance;
+        if (user.transactions[transactionIndex].type === "entrada") {
+            changeBalance = -user.transactions[transactionIndex].value;
+        } else {
+            changeBalance = user.transactions[transactionIndex].value;
+        }
+
+        await db.collection("accounts").updateOne(
+            { email },
+            {
+                $set: {
+                    transactions: updatedTransactions,
+                    balance: user.balance + changeBalance,
+                },
+            }
+        );
+
+        return res.sendStatus(204);
     } catch (error) {
         return res.status(500).send(error.message);
     }
