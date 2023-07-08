@@ -1,18 +1,18 @@
 import { db } from "../database/database.connection.js";
 
 export async function getTransactions(req, res) {
-    const { email } = res.locals;
+    const { email } = res.locals.session;
 
     try {
         const user = await db.collection("accounts").findOne({ email });
         return res.status(200).send(user);
     } catch (error) {
-        return res.status(500).send({ message: err.message });
+        return res.status(500).send(error.message);
     }
 }
 
 export async function newTransaction(req, res) {
-    const { email } = res.locals;
+    const { email } = res.locals.session;
     const { value, description } = req.body;
     const type = req.params.tipo;
     let changeBalance;
@@ -41,6 +41,6 @@ export async function newTransaction(req, res) {
             );
         return res.sendStatus(201);
     } catch (error) {
-        return res.status(500).send({ message: err.message });
+        return res.status(500).send(error.message);
     }
 }

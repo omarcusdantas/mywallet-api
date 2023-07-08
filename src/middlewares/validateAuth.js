@@ -14,7 +14,7 @@ export async function validateAuth(req, res, next) {
         if (!session) {
             return res.sendStatus(401);
         }
-        res.locals.email = session.email;
+        res.locals.session = session;
         next();
     } catch (error) {
         return res.status(500).send(error.message);

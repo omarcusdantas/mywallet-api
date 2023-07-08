@@ -19,7 +19,7 @@ export async function signup(req, res) {
 
         return res.sendStatus(201);
     } catch(error) {
-        return res.status(500).send({ message: error.message });
+        return res.status(500).send(error.message);
     }
 }
 
@@ -30,7 +30,7 @@ export async function signin(req, res) {
         const foundUser = await db.collection("users").findOne({ email });
 
         if (!foundUser) {
-            return res.status(404).send({ message: "Email not registered." });
+            return res.status(404).send("Email not registered.");
         }
 
         if (bcrypt.compareSync(password, foundUser.password)) {
@@ -39,8 +39,19 @@ export async function signin(req, res) {
 
             return res.status(200).send(token);
         }
-        return res.status(401).send({ message: "Wrong password" });
+        return res.status(401).send("Wrong password");
     } catch(error) {
-        return res.status(500).send({ message: error.message });
+        return res.status(500).send(error.message);
+    }
+}
+
+export async function signout(req, res) {
+    const { token } = res.locals.session;
+
+    try {
+        await db.collection("sessions").deleteOne({ token });
+        return res.sendStatus(204);
+    } catch (error) {
+        return res.status(500).send(error.message);
     }
 }
