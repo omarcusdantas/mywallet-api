@@ -102,3 +102,65 @@ export async function deleteTransaction(req, res) {
         return res.status(500).send(error.message);
     }
 }
+
+export async function editTransaction(req, res) {
+    const { email } = res.locals.session;
+    const { value, description } = req.body;
+    const type = req.params.tipo;
+    const id = parseInt(req.params.id);
+
+    let changeBalance;
+
+    if (type === "entrada") {
+        changeBalance = value;
+    } else if (type === "saida") {
+        changeBalance = -value;
+    } else {
+        return res.status(400);
+    }
+
+    if (isNaN(id)) {
+        return res.sendStatus(400);
+    }
+
+    try {
+        const user = await db.collection("accounts").findOne({ email });
+        const transactionIndex = user.transactions.findIndex((t) => t.id === id);
+
+        if (transactionIndex === -1) {
+            return res.status(404).send("Transaction not found");
+        }
+
+        const oldTransaction = user.transactions[transactionIndex];
+        
+        let fixBalance;
+        if(oldTransaction.type === "entrada") {
+            fixBalance = -oldTransaction.value;
+        } else {
+            fixBalance = oldTransaction.value;
+        }
+
+        const updatedTransactions = [...user.transactions];
+        updatedTransactions[transactionIndex] = {
+            value,
+            description,
+            type,
+            date: oldTransaction.date,
+        }
+
+        await db
+            .collection("accounts")
+            .updateOne(
+                { email },
+                {
+                    $set: {
+                        transactions: [...updatedTransactions],
+                        balance: user.balance + changeBalance + fixBalance,
+                    },
+                }
+            );
+        return res.sendStatus(200);
+    } catch (error) {
+        return res.status(500).send(error.message);
+    }
+}
