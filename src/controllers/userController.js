@@ -28,7 +28,7 @@ export async function newTransaction(req, res) {
     }
 
     const transaction = {
-        formatValue, 
+        value: formatValue, 
         description, 
         type, 
         date: new Date(),
@@ -145,7 +145,7 @@ export async function editTransaction(req, res) {
 
         const updatedTransactions = [...user.transactions];
         updatedTransactions[transactionIndex] = {
-            value,
+            value: formatValue,
             description,
             type,
             date: oldTransaction.date,
