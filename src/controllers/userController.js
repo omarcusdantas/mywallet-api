@@ -15,18 +15,20 @@ export async function newTransaction(req, res) {
     const { email } = res.locals.session;
     const { value, description } = req.body;
     const type = req.params.tipo;
+    const formatValue = Number(value);
+
     let changeBalance;
 
     if (type === "entrada") {
-        changeBalance = value;
+        changeBalance = formatValue;
     } else if (type === "saida") {
-        changeBalance = -value;
+        changeBalance = -formatValue;
     } else {
         return res.status(400);
     }
 
     const transaction = {
-        value, 
+        formatValue, 
         description, 
         type, 
         date: new Date(),
@@ -108,13 +110,14 @@ export async function editTransaction(req, res) {
     const { value, description } = req.body;
     const type = req.params.tipo;
     const id = parseInt(req.params.id);
+    const formatValue = Number(value)
 
     let changeBalance;
 
     if (type === "entrada") {
-        changeBalance = value;
+        changeBalance = formatValue;
     } else if (type === "saida") {
-        changeBalance = -value;
+        changeBalance = -formatValue;
     } else {
         return res.status(400);
     }
