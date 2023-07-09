@@ -149,6 +149,7 @@ export async function editTransaction(req, res) {
             description,
             type,
             date: oldTransaction.date,
+            id: oldTransaction.id,
         }
 
         await db
